@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gardemart - Your go-to store for rare Pokémon cards and sealed products. Shop authentic singles and sealed boosters with secure PayPal payments.">
+    <meta name="keywords" content="Pokémon cards, TCG, sealed products, singles, Gardemart">
+    <meta name="author" content="Gardemart">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+    <title>Gardemart | Rare Pokémon Cards & Sealed Products</title>
+    
+    <script src="https://www.paypal.com/sdk/js?client-id=AQpPxU_TeDSFX4sGEQZVaqyMqmWO_VDyzXO5deFNPwIkyzckfXh1ECMUOdkjFz_Q-c8GSARJvQ-kho62&currency=USD"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <style>
+        /* 1. THEME VARIABLES */
+        :root {
+            --primary: #c62828;
+            --primary-hover: #b71c1c;
+            --bg-body: #0f111a;
+            --bg-card: #1c1f2b;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent: #d1adff;
+            --price: #00ff88;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .light-mode {
+            --bg-body: #f1f1f1;
+            --bg-card: #ffffff;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --accent: #6a0dad;
+            --price: #008f4c;
+        }
+
+        /* 2. CORE LAYOUT */
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        header {
+            background-color: var(--primary);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header h1 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; color: white; }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .cart-trigger {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cart-trigger:hover { transform: scale(1.05); }
+
+        .nav-controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            padding: 2rem 1rem;
+            flex-wrap: wrap;
+        }
+
+        button { cursor: pointer; font-family: inherit; transition: var(--transition); }
+
+        .btn-filter {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 8px 20px;
+            border-radius: 8px;
+        }
+
+        .btn-filter.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        /* 4. PRODUCT GRID */
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto 50px;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+        }
+
+        .img-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .img-container img { width: 160px; height: 160px; object-fit: contain; }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 15px;
+        }
+
+        .price { color: var(--price); font-weight: 800; font-size: 1.4rem; }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* 5. SIDEBAR CART */
+        #cartSidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100vh;
+            background: var(--bg-card);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            z-index: 2000;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        #cartSidebar.open { right: 0; }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cart-total-section { 
+            margin-top: auto; 
+            padding-top: 20px; 
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #paypal-button-container {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body id="mainBody">
+
+<header>
+    <h1>GARDEMART</h1>
+    <button class="cart-trigger" onclick="toggleCart()">
+        🛒 Cart (<span id="cartCount">0</span>)
+    </button>
+</header>
+
+<div class="hero">
+    <h2>Welcome to Gardemart</h2>
+    <p>Discover rare Pokémon cards and sealed products. Shop with confidence and build your collection today!</p>
+</div>
+
+<div class="nav-controls">
+    <input type="text" id="searchInput" placeholder="Search products..." style="padding: 8px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: var(--bg-card); color: var(--text-main);">
+    <button class="btn-filter" onclick="toggleMode()">🌓 Toggle Theme</button>
+    <button class="btn-filter active" onclick="filterItems('all', this)">All</button>
+    <button class="btn-filter" onclick="filterItems('sealed product', this)">Sealed Product</button>
+    <button class="btn-filter" onclick="filterItems('singles', this)">Singles</button>
+</div>
+
+<div class="container" id="productGrid">
+    <div class="card" data-cat="singles">
+        <div class="img-container">
+            <img src="https://commondatastorage.googleapis.com/images.pricecharting.com/8759ff2a3879304cd32c48caa8f4dedc126432cd1a3c3b22ea9d7dc4c399db5f/1600.jpg" alt="Pikachu">
+        </div>
+        <span style="color:var(--accent); font-size: 0.7rem; text-transform: uppercase; font-weight: bold;">Singles</span>
+        <h3 style="margin: 5px 0;">Pikachu</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem;">promo #88.</p>
+        <div class="price-row">
+            <span class="price">$10.00</span>
+            <button class="btn-add" onclick="addToCart('Pikachu', 10.00)">Add +</button>
+        </div>
+    </div>
+
+    <div class="card" data-cat="singles">
+        <div class="img-container">
+            <img src="https://images.pokemontcg.io/sm3/140_hires.png" alt="Gardevoir GX">
+        </div>
+        <span style="color:var(--accent); font-size: 0.7rem; text-transform: uppercase; font-weight: bold;">Singles</span>
+        <h3 style="margin: 5px 0;">Gardevoir GX</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem;">140/147 Burning Shadows.</p>
+        <div class="price-row">
+            <span class="price">$42.00</span>
+            <button class="btn-add" onclick="addToCart('Gardevoir GX', 42.00)">Add +</button>
+        </div>
+    </div>
+
+    <div class="card" data-cat="sealed product">
+        <div class="img-container">
+            <img src="https://wargamesshop.net/wp-content/uploads/2025/09/chrrizard-600x423.png" alt="Charizard UPC">
+        </div>
+        <span style="color:var(--accent); font-size: 0.7rem; text-transform: uppercase; font-weight: bold;">Sealed Product</span>
+        <h3 style="margin: 5px 0;">Charizard UPC</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem;">Mega Charizard UPC</p>
+        <div class="price-row">
+            <span class="price">$145.00</span>
+            <button class="btn-add" onclick="addToCart('Charizard UPC', 145.00)">Add +</button>
+        </div>
+    </div>
+
+    <div class="card" data-cat="sealed product">
+        <div class="img-container">
+            <img src="https://th.bing.com/th/id/OIP.PhCnPo61LGu1NqMDAdEOYQAAAA?w=196&h=196&c=7&r=0&o=7&cb=ucfimg2&pid=1.7&rm=3&ucfimg=1" alt="Phantasmal booster bundle">
+        </div>
+        <span style="color:var(--accent); font-size: 0.7rem; text-transform: uppercase; font-weight: bold;">Sealed Product</span>
+        <h3 style="margin: 5px 0;">Phantasmal booster bundle</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem;">Phantasmal booster bundle</p>
+        <div class="price-row">
+            <span class="price">$50.00</span>
+            <button class="btn-add" onclick="addToCart('Phantasmal booster bundle', 50.00)">Add +</button>
+        </div>
+    </div>
+
+    <div class="card" data-cat="sealed product">
+        <div class="img-container">
+            <img src="https://m.media-amazon.com/images/I/81t5bZgsk4L._AC_SL1500_.jpg" alt="Phantasmal ETB">
+        </div>
+        <span style="color:var(--accent); font-size: 0.7rem; text-transform: uppercase; font-weight: bold;">Sealed Product</span>
+        <h3 style="margin: 5px 0;">Phantasmal ETB</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem;">Phantasmal ETB</p>
+        <div class="price-row">
+            <span class="price">$80.00</span>
+            <button class="btn-add" onclick="addToCart('Phantasmal ETB', 80.00)">Add +</button>
+        </div>
+    </div>
+
+    <div class="card" data-cat="sealed product">
+        <div class="img-container">
+            <img src="https://zardocards.com/cdn/shop/files/lost-origin-pc-etb-zardocards-513823.png?v=1715127302&width=511" alt="Lost Origin ETB">
+        </div>
+        <span style="color:var(--accent); font-size: 0.7rem; text-transform: uppercase; font-weight: bold;">Sealed Product</span>
+        <h3 style="margin: 5px 0;">Lost Origin ETB</h3>
+        <p style="color:var(--text-muted); font-size: 0.9rem;">One of THE ETB's From the Sword and Shield Era.</p>
+        <div class="price-row">
+            <span class="price">$130.00</span>
+            <button class="btn-add" onclick="addToCart('Lost Origin ETB', 130.00)">Add +</button>
+        </div>
+    </div>
+</div>
+
+<div id="cartSidebar">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>Your Cart</h2>
+        <button onclick="toggleCart()" style="background:none; border:none; color:var(--text-muted); font-size:2rem;">&times;</button>
+    </div>
+    
+    <div id="cartItemsList" style="flex-grow:1; overflow-y:auto; margin-top:20px;">
+        <p style="text-align:center; color:var(--text-muted);">Your cart is empty.</p>
+    </div>
+
+    <div class="cart-total-section" id="checkoutSection" style="display: none;">
+        <div style="display:flex; justify-content:space-between; font-size:1.3rem; font-weight:bold; margin-bottom:20px;">
+            <span>Total:</span>
+            <span id="cartTotalPrice">$0.00</span>
+        </div>
+        <div id="paypal-button-container"></div>
+    </div>
+</div>
+
+<script>
+    let cart = [];
+
+    function toggleMode() {
+        document.getElementById('mainBody').classList.toggle('light-mode');
+    }
+
+    function toggleCart() {
+        document.getElementById('cartSidebar').classList.toggle('open');
+    }
+
+    function filterItems(category, btn) {
+        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        document.querySelectorAll('.card').forEach(card => {
+            if (category === 'all' || card.getAttribute('data-cat') === category) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function searchProducts() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('.card').forEach(card => {
+            const title = card.querySelector('h3').textContent.toLowerCase();
+            const desc = card.querySelector('p').textContent.toLowerCase();
+            if (title.includes(query) || desc.includes(query)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    document.getElementById('searchInput').addEventListener('input', searchProducts);
+
+    function addToCart(name, price) {
+        const itemIndex = cart.findIndex(item => item.name === name);
+        if (itemIndex > -1) {
+            cart[itemIndex].qty += 1;
+        } else {
+            cart.push({ name, price, qty: 1 });
+        }
+        updateCartUI();
+        if (!document.getElementById('cartSidebar').classList.contains('open')) {
+            toggleCart();
+        }
+    }
+
+    function removeItem(name) {
+        cart = cart.filter(item => item.name !== name);
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        const list = document.getElementById('cartItemsList');
+        const count = document.getElementById('cartCount');
+        const totalDisp = document.getElementById('cartTotalPrice');
+        const checkoutSection = document.getElementById('checkoutSection');
+        
+        const totalQty = cart.reduce((acc, item) => acc + item.qty, 0);
+        count.innerText = totalQty;
+
+        if (cart.length === 0) {
+            list.innerHTML = `<p style="text-align:center; color:var(--text-muted);">Your cart is empty.</p>`;
+            totalDisp.innerText = "$0.00";
+            checkoutSection.style.display = 'none';
+            return;
+        }
+
+        checkoutSection.style.display = 'block';
+        let totalHTML = '';
+        let totalPrice = 0;
+
+        cart.forEach(item => {
+            totalPrice += (item.price * item.qty);
+            totalHTML += `
+                <div class="cart-item">
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        <small>${item.qty} x $${item.price.toFixed(2)}</small>
+                    </div>
+                    <button onclick="removeItem('${item.name}')" style="background:none; border:none; color:#ff5252; cursor:pointer;">Remove</button>
+                </div>
+            `;
+        });
+
+        list.innerHTML = totalHTML;
+        totalDisp.innerText = `$${totalPrice.toFixed(2)}`;
+    }
+
+    // --- PAYPAL INTEGRATION ---
+    paypal.Buttons({
+        style: {
+            layout: 'vertical',
+            color:  'gold',
+            shape:  'rect',
+            label:  'checkout'
+        },
+        createOrder: function(data, actions) {
+            // Calculate total from current cart state
+            const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0).toFixed(2);
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: total
+                    }
+                }]
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                alert('Transaction completed by ' + details.payer.name.given_name + '!');
+                
+                // Send notification email
+                const cartDetails = cart.map(item => `${item.name} - Qty: ${item.qty} - $${item.price.toFixed(2)} each`).join('\n');
+                const total = cart.reduce((acc, item) => acc + (item.price * item.qty), 0).toFixed(2);
+                
+                // Note: EmailJS init should use your actual User ID, not email
+                emailjs.init('YOUR_EMAILJS_USER_ID'); // Replace with your EmailJS User ID
+                
+                emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', { // Replace with your service and template IDs
+                    to_email: 'gardemart@outlook.com', // Your email
+                    subject: 'New Purchase Notification',
+                    message: `New purchase:\n\n${cartDetails}\n\nTotal: $${total}\n\nCustomer: ${details.payer.name.given_name} ${details.payer.name.surname}\nEmail: ${details.payer.email_address}`,
+                    phone: '979-253-2128' // For SMS, if using email-to-SMS
+                }).then(function(response) {
+                    console.log('Email sent successfully', response);
+                }, function(error) {
+                    console.log('Email send failed', error);
+                });
+                
+                cart = []; // Clear cart on success
+                updateCartUI();
+                toggleCart();
+            });
+        }
+    }).render('#paypal-button-container');
+</script>
+
+<footer style="background: var(--bg-card); color: var(--text-muted); text-align: center; padding: 2rem; margin-top: 4rem;">
+    <p>&copy; 2025 Gardemart. All rights reserved. | Contact us: gardemart@outlook.com</p>
+    <p>Secure payments powered by PayPal.</p>
+</footer>
+
+</body>
+</html>
